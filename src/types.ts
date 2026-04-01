@@ -1,19 +1,26 @@
+export interface ODataResponse<T = Record<string, unknown>> {
+  "odata.metadata"?: string;
+  value: T[];
+  "odata.count"?: string;
+}
+
 export interface CatalogItem {
-  ref: string;
-  code: string;
-  description: string;
+  Ref_Key: string;
+  Code?: string;
+  Description?: string;
+  DeletionMark?: boolean;
   [key: string]: unknown;
 }
 
 export interface Document {
-  ref: string;
-  number: string;
-  date: string;
-  posted: boolean;
+  Ref_Key: string;
+  Number?: string;
+  Date?: string;
+  Posted?: boolean;
+  DeletionMark?: boolean;
   [key: string]: unknown;
 }
 
-export interface ListResponse<T> {
-  data: T[];
-  total?: number;
+export interface RegisterRecord {
+  [key: string]: unknown;
 }

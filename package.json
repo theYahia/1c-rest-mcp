@@ -1,14 +1,16 @@
 {
   "name": "@theyahia/1c-rest-mcp",
-  "version": "1.1.1",
-  "description": "MCP server for 1C Enterprise — ERP catalogs, documents via REST API (Russia)",
+  "version": "1.1.0",
+  "description": "MCP server for 1C:Enterprise REST API — catalogs, documents, registers, reports via OData 3.0. HTTP Basic Auth.",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "1c-rest-mcp": "dist/index.js"
+    "1c-rest-mcp": "dist/index.js",
+    "1c-rest-mcp-http": "dist/http.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "smithery.yaml"
   ],
   "engines": {
     "node": ">=18.0.0"
@@ -16,8 +18,12 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/index.ts",
+    "dev:http": "tsx src/http.ts",
     "start": "node dist/index.js",
-    "prepublishOnly": "npm run build"
+    "start:http": "node dist/http.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build && npm test"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
@@ -26,7 +32,8 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "tsx": "^4.19.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.2"
   },
   "publishConfig": {
     "access": "public"
@@ -44,10 +51,9 @@
     "erp",
     "documents",
     "catalogs",
-    "1c-rest",
-    "api",
-    "typescript",
-    "accounting"
+    "registers",
+    "reports",
+    "odata"
   ],
   "license": "MIT",
   "repository": {
