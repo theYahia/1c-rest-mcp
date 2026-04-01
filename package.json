@@ -1,12 +1,18 @@
 {
   "name": "@theyahia/1c-rest-mcp",
-  "version": "1.0.0",
-  "description": "MCP server for 1C REST API -- catalogs, documents. Basic Auth, configurable base URL.",
+  "version": "1.1.1",
+  "description": "MCP server for 1C Enterprise — ERP catalogs, documents via REST API (Russia)",
   "type": "module",
   "main": "dist/index.js",
-  "bin": { "1c-rest-mcp": "dist/index.js" },
-  "files": ["dist"],
-  "engines": { "node": ">=18.0.0" },
+  "bin": {
+    "1c-rest-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/index.ts",
@@ -22,11 +28,32 @@
     "tsx": "^4.19.0",
     "typescript": "^5.7.0"
   },
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "mcpName": "io.github.theYahia/1c-rest-mcp",
-  "keywords": ["mcp", "mcp-server", "model-context-protocol", "claude", "ai", "russian-api", "1c", "1c-enterprise", "erp", "documents", "catalogs"],
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "claude",
+    "ai",
+    "russian-api",
+    "1c",
+    "1c-enterprise",
+    "erp",
+    "documents",
+    "catalogs",
+    "1c-rest",
+    "api",
+    "typescript",
+    "accounting"
+  ],
   "license": "MIT",
-  "repository": { "type": "git", "url": "https://github.com/theYahia/1c-rest-mcp.git" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/theYahia/1c-rest-mcp.git"
+  },
   "homepage": "https://github.com/theYahia/1c-rest-mcp#readme",
   "author": "theYahia (https://github.com/theYahia)"
 }
