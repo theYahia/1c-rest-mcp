@@ -1,7 +1,7 @@
 {
   "name": "@theyahia/1c-rest-mcp",
   "version": "1.1.0",
-  "description": "MCP server for 1C:Enterprise REST API — catalogs, documents, registers, reports via OData 3.0. HTTP Basic Auth.",
+  "description": "MCP server for 1C Enterprise — ERP catalogs, documents via REST API (Russia)",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -53,7 +53,11 @@
     "catalogs",
     "registers",
     "reports",
-    "odata"
+    "odata",
+    "1c-rest",
+    "api",
+    "typescript",
+    "accounting"
   ],
   "license": "MIT",
   "repository": {
