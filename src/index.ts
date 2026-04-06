@@ -7,7 +7,9 @@ async function main() {
   const server = createServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error(`[1c-rest-mcp] v${VERSION} запущен (stdio). 7 инструментов. OData 3.0.`);
+  const modules = process.env["ONEC_SERVICES"] || "all";
+  console.error(`[1c-rest-mcp] v${VERSION} запущен (stdio). 9 инструментов. OData 3.0. Модули: ${modules}.`);
+  console.error("[1c-rest-mcp] Опционально: ONEC_SERVICES=catalogs,documents,registers,reports,odata");
   console.error("[1c-rest-mcp] Требуются: ONEC_BASE_URL, ONEC_LOGIN, ONEC_PASSWORD.");
 }
 

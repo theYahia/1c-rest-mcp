@@ -2,10 +2,12 @@
 
 MCP-сервер для REST API 1С:Предприятие через OData 3.0 -- справочники, документы, регистры, отчёты.
 
-## Инструменты (7)
+## Инструменты (9)
 
 | Инструмент | Описание |
 |---|---|
+| `list_entities` | Получить список доступных сущностей OData (справочники, документы, регистры) |
+| `get_document_by_number` | Найти документ по номеру и типу (например, СчётФактура №УТ-001) |
 | `get_catalogs` | Чтение справочников через OData ($filter, $select, $orderby, $top, $skip) |
 | `get_documents` | Чтение документов через OData с фильтрацией |
 | `create_document` | Создание документа (POST) |
@@ -39,6 +41,16 @@ MCP-сервер для REST API 1С:Предприятие через OData 3.0
 }
 ```
 
+## Фильтрация модулей (ONEC_SERVICES)
+
+Чтобы ограничить набор инструментов (например, для экономии контекста LLM):
+
+```bash
+ONEC_SERVICES=catalogs,documents npx @theyahia/1c-rest-mcp
+```
+
+Доступные модули: `catalogs`, `documents`, `registers`, `reports`, `odata`, `meta`. По умолчанию (`all`) — все инструменты активны. Инструменты `list_entities` и `get_document_by_number` доступны всегда.
+
 ## Streamable HTTP
 
 ```bash
@@ -57,6 +69,7 @@ npx @theyahia/1c-rest-mcp-http
 | `ONEC_BASE_URL` | Да | Базовый URL сервера 1С (например http://localhost:8080/base) |
 | `ONEC_LOGIN` | Да | Логин для HTTP Basic Auth |
 | `ONEC_PASSWORD` | Да | Пароль для HTTP Basic Auth |
+| `ONEC_SERVICES` | Нет | Список модулей через запятую (по умолчанию: all) |
 
 > Обратная совместимость: старые имена `1C_BASE_URL`, `1C_LOGIN`, `1C_PASSWORD` тоже поддерживаются.
 
