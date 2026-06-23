@@ -1,3 +1,13 @@
+# ⚠️ Moved / Deprecated
+
+This repository is **deprecated** and frozen at v1.2.1 (9 tools). `@theyahia/1c-rest-mcp` is now
+developed in **[theYahia/WWmcp](https://github.com/theYahia/WWmcp/tree/main/servers/1c-rest)**
+(v3.x — 32 tools, MCP prompts, batch ops, change-tracking, OData injection hardening).
+
+Install: `npx -y @theyahia/1c-rest-mcp` · Issues & PRs → the monorepo.
+
+---
+
 # @theyahia/1c-rest-mcp
 
 MCP-сервер для REST API 1С:Предприятие через OData 3.0 -- справочники, документы, регистры, отчёты.
