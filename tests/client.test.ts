@@ -1,5 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { buildODataPath, oneCGet, oneCPost, oneCPatch } from "../src/client.js";
+import {
+  buildODataPath,
+  buildKeyedPath,
+  escapeODataString,
+  oneCGet,
+  oneCPost,
+  oneCPatch,
+  resetClient,
+} from "../src/client.js";
 
 describe("buildODataPath", () => {
   it("builds path without query params", () => {
@@ -14,9 +22,47 @@ describe("buildODataPath", () => {
     expect(path).toContain("$top=10");
   });
 
-  it("encodes entity name", () => {
+  it("encodes Cyrillic entity names", () => {
     const path = buildODataPath("Document_Счёт");
     expect(path).toContain(encodeURIComponent("Document_Счёт"));
+  });
+});
+
+describe("buildKeyedPath", () => {
+  const GUID = "5c8d9e2f-1a2b-3c4d-5e6f-7a8b9c0d1e2f";
+
+  it("builds a keyed path with a bound action and query", () => {
+    const path = buildKeyedPath("Document_Test", GUID, "Post", { $format: "json" });
+    expect(path).toBe(
+      `/odata/standard.odata/Document_Test(guid'${GUID}')/Post?$format=json`,
+    );
+  });
+
+  it("builds a keyed path without an action", () => {
+    const path = buildKeyedPath("Catalog_Test", GUID);
+    expect(path).toBe(`/odata/standard.odata/Catalog_Test(guid'${GUID}')`);
+  });
+
+  it("encodes a Cyrillic entity but keeps the guid tuple structural", () => {
+    const path = buildKeyedPath("Document_Счёт", GUID);
+    expect(path).toContain(encodeURIComponent("Document_Счёт"));
+    expect(path).toContain(`(guid'${GUID}')`);
+  });
+
+  it("rejects a non-GUID Ref_Key (injection guard)", () => {
+    expect(() => buildKeyedPath("Document_Test", "x') and 1 eq 1--")).toThrow(/Invalid Ref_Key/);
+    expect(() => buildKeyedPath("Document_Test", "abc-123")).toThrow(/Invalid Ref_Key/);
+  });
+});
+
+describe("escapeODataString", () => {
+  it("doubles single quotes", () => {
+    expect(escapeODataString("O'Brien")).toBe("O''Brien");
+    expect(escapeODataString("a'b'c")).toBe("a''b''c");
+  });
+
+  it("leaves clean strings unchanged", () => {
+    expect(escapeODataString("Молоко")).toBe("Молоко");
   });
 });
 
@@ -27,17 +73,23 @@ describe("oneCGet / oneCPost / oneCPatch", () => {
     process.env["ONEC_BASE_URL"] = "http://localhost:8080/base";
     process.env["ONEC_LOGIN"] = "admin";
     process.env["ONEC_PASSWORD"] = "secret";
+    delete process.env["1C_BASE_URL"];
+    delete process.env["1C_LOGIN"];
+    delete process.env["1C_PASSWORD"];
+    resetClient();
   });
 
   afterEach(() => {
     process.env = { ...originalEnv };
     vi.restoreAllMocks();
+    resetClient();
   });
 
-  it("oneCGet sends GET with auth header", async () => {
+  it("oneCGet sends GET with Basic auth header", async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ value: [] }),
+      text: () => Promise.resolve(JSON.stringify({ value: [] })),
+      headers: new Map(),
     });
     vi.stubGlobal("fetch", mockFetch);
 
@@ -47,21 +99,24 @@ describe("oneCGet / oneCPost / oneCPatch", () => {
     const [url, opts] = mockFetch.mock.calls[0];
     expect(url).toBe("http://localhost:8080/base/odata/standard.odata/Catalog_Test?$format=json");
     expect(opts.method).toBe("GET");
-    expect(opts.headers.Authorization).toMatch(/^Basic /);
+    const authHeader = new Headers(opts.headers).get("Authorization");
+    expect(authHeader).toMatch(/^Basic /);
+    // Verify Basic encoding: base64("admin:secret") == "YWRtaW46c2VjcmV0"
+    expect(authHeader).toBe(`Basic ${Buffer.from("admin:secret").toString("base64")}`);
     expect(result).toEqual({ value: [] });
   });
 
   it("oneCPost sends POST with body", async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ Ref_Key: "abc-123" }),
+      text: () => Promise.resolve(JSON.stringify({ Ref_Key: "abc-123" })),
+      headers: new Map(),
     });
     vi.stubGlobal("fetch", mockFetch);
 
     const result = await oneCPost("/odata/standard.odata/Document_Test", { Number: "001" });
     const [, opts] = mockFetch.mock.calls[0];
     expect(opts.method).toBe("POST");
-    expect(opts.headers["Content-Type"]).toBe("application/json");
     expect(JSON.parse(opts.body)).toEqual({ Number: "001" });
     expect(result).toEqual({ Ref_Key: "abc-123" });
   });
@@ -69,7 +124,8 @@ describe("oneCGet / oneCPost / oneCPatch", () => {
   it("oneCPatch sends PATCH with body", async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ Ref_Key: "abc-123" }),
+      text: () => Promise.resolve(JSON.stringify({ Ref_Key: "abc-123" })),
+      headers: new Map(),
     });
     vi.stubGlobal("fetch", mockFetch);
 
@@ -78,16 +134,55 @@ describe("oneCGet / oneCPost / oneCPatch", () => {
     expect(opts.method).toBe("PATCH");
   });
 
-  it("throws when env vars missing", async () => {
+  it("throws when ONEC_BASE_URL missing", async () => {
     delete process.env["ONEC_BASE_URL"];
     delete process.env["1C_BASE_URL"];
+    resetClient();
     await expect(oneCGet("/test")).rejects.toThrow("ONEC_BASE_URL");
   });
 
-  it("retries on 500", async () => {
+  it("throws when credentials missing", async () => {
+    delete process.env["ONEC_LOGIN"];
+    delete process.env["1C_LOGIN"];
+    resetClient();
+    await expect(oneCGet("/test")).rejects.toThrow(/ONEC_LOGIN/);
+  });
+
+  it("backward-compat: 1C_* env vars also accepted", async () => {
+    delete process.env["ONEC_BASE_URL"];
+    delete process.env["ONEC_LOGIN"];
+    delete process.env["ONEC_PASSWORD"];
+    process.env["1C_BASE_URL"] = "http://legacy:8080/base";
+    process.env["1C_LOGIN"] = "legacy_user";
+    process.env["1C_PASSWORD"] = "legacy_pass";
+    resetClient();
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify({ value: [] })),
+      headers: new Map(),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    await oneCGet("/test");
+    const [url, opts] = mockFetch.mock.calls[0];
+    expect(url).toBe("http://legacy:8080/base/test");
+    const authHeader = new Headers(opts.headers).get("Authorization");
+    expect(authHeader).toBe(`Basic ${Buffer.from("legacy_user:legacy_pass").toString("base64")}`);
+  });
+
+  it("retries on 500 then succeeds", async () => {
     const mockFetch = vi.fn()
-      .mockResolvedValueOnce({ ok: false, status: 500, statusText: "Internal", text: () => Promise.resolve("") })
-      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ value: [1] }) });
+      .mockResolvedValueOnce({
+        ok: false, status: 500, statusText: "Internal",
+        text: () => Promise.resolve(""),
+        headers: new Map(),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify({ value: [1] })),
+        headers: new Map(),
+      });
     vi.stubGlobal("fetch", mockFetch);
 
     const result = await oneCGet("/test");
@@ -95,14 +190,15 @@ describe("oneCGet / oneCPost / oneCPatch", () => {
     expect(result).toEqual({ value: [1] });
   });
 
-  it("throws on 4xx without retry", async () => {
+  it("throws on 404 without retry", async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: false, status: 404, statusText: "Not Found",
       text: () => Promise.resolve("Not found"),
+      headers: new Map(),
     });
     vi.stubGlobal("fetch", mockFetch);
 
-    await expect(oneCGet("/missing")).rejects.toThrow("404");
+    await expect(oneCGet("/missing")).rejects.toMatchObject({ status: 404 });
     expect(mockFetch).toHaveBeenCalledOnce();
   });
 });

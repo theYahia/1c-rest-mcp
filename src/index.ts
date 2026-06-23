@@ -1,19 +1,36 @@
 #!/usr/bin/env node
 
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { createServer, VERSION } from "./server.js";
+/**
+ * @theyahia/1c-rest-mcp — MCP server for 1C:Enterprise REST/OData API
+ *
+ * 32 tools across 11 modules: meta (always on), catalogs, documents, registers,
+ * accounting, constants, shortcuts, batch, changes, reports, odata. Use
+ * ONEC_SERVICES env var to limit which optional modules register.
+ *
+ * Auth: HTTP Basic (ONEC_LOGIN / ONEC_PASSWORD) — backward-compat aliases 1C_*.
+ *
+ * Transports:
+ *   - stdio (default) — for Claude Desktop / Cursor / Windsurf
+ *   - Streamable HTTP — --http flag or HTTP_PORT env (port 3000 default)
+ */
 
-async function main() {
-  const server = createServer();
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  const modules = process.env["ONEC_SERVICES"] || "all";
-  console.error(`[1c-rest-mcp] v${VERSION} запущен (stdio). 9 инструментов. OData 3.0. Модули: ${modules}.`);
-  console.error("[1c-rest-mcp] Опционально: ONEC_SERVICES=catalogs,documents,registers,reports,odata");
-  console.error("[1c-rest-mcp] Требуются: ONEC_BASE_URL, ONEC_LOGIN, ONEC_PASSWORD.");
-}
+import { runServer } from "@theyahia/mcp-core";
+import {
+  createServer,
+  countRegisteredTools,
+  getEnabledModules,
+  logger,
+  VERSION,
+} from "./server.js";
 
-main().catch((error) => {
-  console.error("[1c-rest-mcp] Ошибка:", error);
+runServer(createServer, {
+  name: "1c-rest-mcp",
+  version: VERSION,
+  toolCount: countRegisteredTools(getEnabledModules()),
+  logger,
+}).catch((error) => {
+  logger.error("Fatal error", {
+    error: error instanceof Error ? error.message : String(error),
+  });
   process.exit(1);
 });
