@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>aprovodka — MCP-сервер для 1С:Предприятие через OData</title>
+<meta name="description" content="MCP-сервер для 1С:Предприятие: ИИ-агент читает и изменяет данные боевой базы через штатный OData 3.0. Без расширения конфигурации, без BSL. 34 инструмента, гейт безопасной записи, откат операций.">
+<link rel="canonical" href="https://aprovodka.ru/">
+<style>
+:root{
+  --bg:#fbfbfa; --fg:#1a1a19; --muted:#5c5c58; --line:#e2e1dc;
+  --card:#ffffff; --accent:#8a5a2b; --accent-soft:#f5efe7; --code:#f4f3f0;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#16161a; --fg:#e8e7e3; --muted:#a0a09a; --line:#2c2c31;
+    --card:#1d1d22; --accent:#d9a066; --accent-soft:#252029; --code:#212126;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16161a; --fg:#e8e7e3; --muted:#a0a09a; --line:#2c2c31;
+  --card:#1d1d22; --accent:#d9a066; --accent-soft:#252029; --code:#212126;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:820px;margin:0 auto;padding:0 24px}
+header{padding:72px 0 40px;border-bottom:1px solid var(--line)}
+h1{font-size:2.6rem;line-height:1.15;margin:0 0 14px;letter-spacing:-.02em}
+h2{font-size:1.4rem;margin:52px 0 16px;letter-spacing:-.01em}
+h3{font-size:1.05rem;margin:28px 0 8px}
+.lead{font-size:1.15rem;color:var(--muted);margin:0 0 26px;max-width:62ch}
+code,kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em}
+code{background:var(--code);padding:.15em .4em;border-radius:4px}
+pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:14px 16px;
+  overflow-x:auto;font-size:.9rem}
+pre code{background:none;padding:0}
+a{color:var(--accent)}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 22px}
+.badge{font-size:.8rem;padding:3px 10px;border:1px solid var(--line);border-radius:99px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:18px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h3{margin:0 0 6px;font-size:.98rem}
+.card p{margin:0;color:var(--muted);font-size:.92rem}
+.note{background:var(--accent-soft);border-left:3px solid var(--accent);
+  padding:14px 18px;border-radius:0 8px 8px 0;margin:22px 0}
+.note p{margin:0}
+table{width:100%;border-collapse:collapse;font-size:.94rem;margin:16px 0}
+th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:.85rem;text-transform:uppercase;letter-spacing:.04em}
+.price{white-space:nowrap;font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto}
+footer{margin:64px 0 40px;padding-top:24px;border-top:1px solid var(--line);
+  color:var(--muted);font-size:.9rem}
+ul{padding-left:1.2em}
+li{margin:.3em 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>aprovodka</h1>
+  <p class="lead">ИИ-агент читает и изменяет данные боевой базы «1С:Предприятие» — через штатный OData, без единой строки на встроенном языке и без расширения конфигурации.</p>
+  <div class="badges">
+    <span class="badge">34 инструмента</span>
+    <span class="badge">11 модулей</span>
+    <span class="badge">MIT</span>
+    <span class="badge">Node.js 18+</span>
+  </div>
+  <pre><code>npx -y @theyahia/aprovodka</code></pre>
+</header>
+
+<h2>Что это</h2>
+<p>Сервер протокола MCP (Model Context Protocol). Он даёт языковой модели набор инструментов к информационной базе 1С: справочники, документы, все четыре вида регистров, регистр бухгалтерии с виртуальными таблицами, константы, пакетные операции и отслеживание изменений.</p>
+<p>Данные учётной системы закрыты для внешних программ, пока кто-то не напишет обработку, отчёт или обмен. aprovodka снимает этот цикл: интерфейс OData 3.0 публикуется штатными средствами самой платформы, и этого достаточно.</p>
+
+<div class="grid">
+  <div class="card"><h3>Без BSL</h3><p>Ничего не ставится в конфигурацию. Не нужен доступ к конфигуратору и снятие с поддержки.</p></div>
+  <div class="card"><h3>Запись, а не только чтение</h3><p>Создание и изменение документов, проведение и отмена, пометка на удаление.</p></div>
+  <div class="card"><h3>Гейт записи</h3><p>Три режима: выключен, предпросмотр, одобрение человеком. Перехват в одной точке — мимо не пройдёт ни один инструмент.</p></div>
+  <div class="card"><h3>Откат</h3><p>Обратимые операции возвращают токен отката. Необратимые честно помечаются причиной.</p></div>
+</div>
+
+<h2>Безопасность записи</h2>
+<p>Переменная <code>ONEC_WRITE_MODE</code> задаёт режим:</p>
+<ul>
+  <li><code>off</code> — поведение по умолчанию, байт-в-байт как без гейта;</li>
+  <li><code>preview</code> — операция возвращает предпросмотр вместо выполнения;</li>
+  <li><code>approval</code> — выполнение только после явного одобрения по <code>op_hash</code>, одноразового и с ограниченным сроком.</li>
+</ul>
+<p>Каждая операция пишется в журнал аудита (JSONL, fail-closed). Единственный сетевой адресат сервера — адрес вашей базы из <code>ONEC_BASE_URL</code>; телеметрии в зависимостях нет.</p>
+
+<div class="note">
+  <p><strong>Никаких обещаний, которых нельзя подтвердить.</strong> Сертификата ФСТЭК на российские on-prem языковые модели на сегодня нет ни у одного вендора, а утверждённой методики сертификации ПО с искусственным интеллектом не существует. Поэтому мы не пишем «сертифицированы»: оценка соответствия проходится в форме испытаний или приёмки в контуре заказчика.</p>
+</div>
+
+<h2>Готовые схемы конфигураций</h2>
+<p>Инструмент <code>get_config_preset</code> отдаёт курированные схемы типовых конфигураций — «Бухгалтерия предприятия 3.0», «Управление торговлей 11», «Зарплата и управление персоналом 3.1», ERP 2: ключевые сущности с русскими описаниями, готовые примеры запросов и частые ловушки. Данные локальные, запроса к базе не делают.</p>
+<p>Схемы размечены честно: элементы, проверенные на живой базе, отмечены отдельно от восстановленных по документации.</p>
+
+<h2>Услуги</h2>
+<p>Сам сервер бесплатен и распространяется под лицензией MIT. Платное — то, что нельзя скопировать вместе с кодом: работа с вашей базой и обязательства по срокам.</p>
+
+<div class="tablewrap">
+<table>
+  <tr><th>Услуга</th><th>Что входит</th><th>Ориентир</th></tr>
+  <tr>
+    <td>Внедрение под ключ</td>
+    <td>Подключение к боевой базе, схема под вашу конфигурацию, настройка гейта записи под ваш регламент, обучение команды</td>
+    <td class="price">от 30 000 ₽</td>
+  </tr>
+  <tr>
+    <td>Схема под вашу конфигурацию</td>
+    <td>Разбор доработанной или отраслевой конфигурации, проверка сущностей на живой базе, готовые сценарии запросов</td>
+    <td class="price">от 15 000 ₽</td>
+  </tr>
+  <tr>
+    <td>Поддержка со сроками</td>
+    <td>Гарантированные сроки реакции сверх базовых, приоритет обращений, консультации по сценариям</td>
+    <td class="price">от 4 990 ₽/мес</td>
+  </tr>
+  <tr>
+    <td>Приёмка в контуре КИИ</td>
+    <td>Комплект под предварительные испытания, инвентарь по 6 уровню доверия, сопровождение приёмки</td>
+    <td class="price">проектно</td>
+  </tr>
+</table>
+</div>
+<p style="color:var(--muted);font-size:.92rem">Ориентиры, а не прайс-лист: окончательная цена называется после разбора задачи. Базовая поддержка бесплатна для всех и описана в руководстве пользователя.</p>
+
+<h2>Установка</h2>
+<p>Минимальная конфигурация MCP-клиента:</p>
+<pre><code>{
+  "mcpServers": {
+    "aprovodka": {
+      "command": "npx",
+      "args": ["-y", "@theyahia/aprovodka"],
+      "env": {
+        "ONEC_BASE_URL": "https://server/base/odata/standard.odata",
+        "ONEC_LOGIN": "user",
+        "ONEC_PASSWORD": "pass"
+      }
+    }
+  }
+}</code></pre>
+<p>Работает по HTTP Basic. Два транспорта: stdio и Streamable HTTP (<code>aprovodka --http</code>).</p>
+
+<h2>Связаться</h2>
+<p>Вопросы, сообщения об ошибках и заявки на внедрение — через <a href="https://github.com/theYahia/aprovodka/issues">трекер задач</a>. Отвечаем в рабочие дни.</p>
+
+<footer>
+  <p>aprovodka — независимый продукт. Не является продуктом фирмы «1С» и не аффилирован с ней. «1С» и «1С:Предприятие» — товарные знаки фирмы «1С»; наименование продукта их не содержит. Взаимодействие с информационной базой ведётся только через открытый интерфейс OData, предоставляемый самой платформой.</p>
+  <p><a href="https://www.npmjs.com/package/@theyahia/aprovodka">npm</a> · <a href="https://github.com/theYahia/WWmcp/tree/main/servers/aprovodka">исходный код</a> · <a href="https://github.com/theYahia/WWmcp/blob/main/servers/aprovodka/docs/MANUAL.ru.md">руководство пользователя</a> · MIT</p>
+</footer>
+
+</div>
+</body>
+</html>
